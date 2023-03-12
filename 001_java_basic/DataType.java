@@ -12,6 +12,11 @@ public class DataType {
         int sum = x + y;
         System.out.println(sum); // -2147483641
 
+        double f1=1.0/10;
+        double f2=1-9.0/10;
+        System.out.println("f1: "+f1);
+        System.out.println("f2: "+f2);// 0.09999999999999998
+        System.out.println("f1==f2 "+(f1==f2));// false
         int j=0xff22;//65314 16进制表示
         int b=0b010101;// 21 2进制表示
         long l=12131233313L;// 12131233313 long类型结尾要加l(L,不区分大小写)

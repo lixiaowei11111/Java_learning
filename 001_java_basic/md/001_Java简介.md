@@ -179,7 +179,7 @@ Hello, world!
 
   - 布尔类型：boolean
 
-### 4.1.1
+### 4.1.1 整型
 
 + 不同的数据类型占用的字节数不一样。我们看一下Java基本数据类型占用的字节数(Byte)：
 
@@ -223,8 +223,30 @@ Hello, world!
 
   2. float结尾 需要f(F)
 
-  `DataType.java`
+  3. 浮点数运算由于二进制小数原因,并不准确
 
+     1. 整数运算在除数为`0`时会报错，而浮点数运算在除数为`0`时，不会报错，但会返回几个特殊值：
+  
+        1. `NaN`表示Not a Number
+        2. `Infinity`表示无穷大
+        3. `-Infinity`表示负无穷大
+  
+     2. 由于浮点数存在运算误差，所以比较两个浮点数是否相等常常会出现错误的结果。正确的比较方法是判断两个浮点数之差的绝对值是否小于一个很小的数：
+  
+        ```java
+        // 比较x和y是否相等，先计算其差的绝对值:
+        double r = Math.abs(x - y);
+        // 再判断绝对值是否足够小:
+        if (r < 0.00001) {
+            // 可以认为相等
+        } else {
+            // 不相等
+        }
+        ```
+  
+  
+  `DataType.java`
+  
   ```java
   public class DataType {
       public static void main(String[] args){
@@ -275,14 +297,24 @@ public class DataType {
 
 ```java
 public class DataType {
+    /* constructor func */
+    DataType(){
+        test();
+    }
     public static void main(String[] args){
-       /**
+        /**
          * 溢出处理
          * */
         int x = 2147483640;
         int y = 15;
         int sum = x + y;
         System.out.println(sum); // -2147483641
+
+        double f1=1.0/10;
+        double f2=1-9.0/10;
+        System.out.println("f1: "+f1);
+        System.out.println("f2: "+f2);// 0.09999999999999998
+        System.out.println("f1==f2 "+(f1==f2));// false
         int j=0xff22;//65314 16进制表示
         int b=0b010101;// 21 2进制表示
         long l=12131233313L;// 12131233313 long类型结尾要加l(L,不区分大小写)
@@ -293,6 +325,9 @@ public class DataType {
         char c1='c';
         char c2='哈';
 
+        final double PI=3.14;// 常量在定义时进行初始化后就不可再次赋值，再次赋值会导致编译错误。
+        // PI=55;// error
+
         System.out.print(j+"\n");
         System.out.print(b+"\n");
         System.out.print(l+"\n");
@@ -301,7 +336,12 @@ public class DataType {
         System.out.print(b2+"\n");
         System.out.print(c1+"\n");
         System.out.print(c2+"\n");
-    }
+        System.out.print(PI+"\n");// 3.14
+    };
+
+    public void test(){
+        System.out.print(this+"this");
+    };
 }
 ```
 
