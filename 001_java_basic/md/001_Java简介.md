@@ -54,7 +54,7 @@
 - javadoc：用于从Java源码中自动提取注释并生成文档；
 - jdb：Java调试器，用于开发阶段的运行调试。
 
-# 2. Hello World
+# 4.  Hello World
 
 + **文件名必须和类名相同**
 
@@ -76,7 +76,7 @@
 
 + 最后，当我们把代码保存为文件时，文件名必须是`Hello.java`，而且文件名也要注意大小写，因为要和我们定义的类名`Hello`完全保持一致。
 
-## 2.1 java文件的运行过程
+## 4.1 java文件的运行过程
 
 Java源码本质上是一个文本文件，我们需要先用`javac`把`Hello.java`编译成字节码文件`Hello.class`，然后，用`java`命令执行这个字节码文件：
 
@@ -139,7 +139,7 @@ Hello, world!
 
   + 使用`java`可以运行一个已编译的Java程序，参数是类名。
 
-# 3. Java 程序基本结构 太简单跳过
+# 5. Java 程序基本结构 太简单跳过
 
 类名要求：
 
@@ -165,9 +165,9 @@ Hello, world!
 
 
 
-# 4.  变量和数据类型
+# 6.  变量和数据类型
 
-## 4.1 基本数据类型
+## 6.1 基本数据类型
 
 + 基本数据类型是CPU可以直接进行运算的类型。Java定义了以下几种基本数据类型：
 
@@ -179,7 +179,7 @@ Hello, world!
 
   - 布尔类型：boolean
 
-### 4.1.1 整型
+### 6.1.1 整型
 
 + 不同的数据类型占用的字节数不一样。我们看一下Java基本数据类型占用的字节数(Byte)：
 
@@ -270,7 +270,7 @@ Hello, world!
   }
   ```
 
-### 4.1.2 Boolean类型(4 byte)
+### 6.1.2 Boolean类型(4 byte)
 
 + Java语言对布尔类型的存储并没有做规定，因为理论上存储布尔类型只需要1 bit，但是通常JVM内部会把`boolean`表示为4字节整数。
 
@@ -287,7 +287,7 @@ public class DataType {
 }
 ```
 
-### 4.1.3  char 类型
+### 6.1.3  char 类型
 
 + 注意`char`类型使用单引号`'`，且仅有一个字符，要和双引号`"`的字符串类型区分开。
 
@@ -345,7 +345,7 @@ public class DataType {
 }
 ```
 
-## 4.2 引用类型
+## 6.2 引用类型
 
 引用类型最常用的就是`String`字符串：
 
@@ -355,7 +355,7 @@ String s = "hello";
 
 引用类型的变量类似于C语言的指针，它内部存储一个“地址”，指向某个对象在内存的位置
 
-## 4.3 常量定义(final 修饰符)
+## 6.3 常量定义(final 修饰符)
 
 ```java
 public class DataType {
@@ -369,7 +369,7 @@ public class DataType {
 
 ```
 
-## 4.4 var关键字(类似于自动类型推导 auto?)
+## 6.4 var关键字(类似于自动类型推导 auto?)
 
 有些时候，类型的名字太长，写起来比较麻烦。例如：
 
@@ -396,3 +396,168 @@ StringBuilder sb = new StringBuilder();
 ```
 
 因此，使用`var`定义变量，仅仅是少写了变量类型而已。
+
+## 6.5 String and char
+
+### 字符类型
+
+字符类型`char`是基本数据类型，它是`character`的缩写。一个`char`保存一个Unicode字符：
+
+```
+char c1 = 'A';
+char c2 = '中';
+```
+
+因为Java在内存中总是使用Unicode表示字符，所以，一个英文字符和一个中文字符都用一个`char`类型表示，它们都占用两个字节。要显示一个字符的Unicode编码，只需将`char`类型直接赋值给`int`类型即可：
+
+```
+int n1 = 'A'; // 字母“A”的Unicodde编码是65
+int n2 = '中'; // 汉字“中”的Unicode编码是20013
+```
+
+还可以直接用转义字符`\u`+Unicode编码来表示一个字符：
+
+```
+// 注意是十六进制:
+char c3 = '\u0041'; // 'A'，因为十六进制0041 = 十进制65
+char c4 = '\u4e2d'; // '中'，因为十六进制4e2d = 十进制20013
+```
+
+### 字符串类型
+
++ **和js不同, 在java中String是引用类型**,其余特性和js基本相同
+
++ 和`char`类型不同，字符串类型`String`是引用类型，我们用双引号`"..."`表示字符串。一个字符串可以存储0个到任意个字符：
+
+```java
+public class StringAndChar {
+    public static void main(String[] args){
+        String s="";
+        String s1="A";
+        // String字符串 在Java中是引用类型
+        String s2="Hello world";
+        String s3=s2;
+        s2="ybb"; // 赋值改变的只是栈内存中地址指向, 堆内存中的字符串内容并没有改变
+        System.out.println("原来s2指向的堆内存地址的内容 : "+s3);
+        System.out.println("现在的s2 : "+s2);
+
+        // null 和 "" (空字符串不相等)
+        System.out.println(null=="");// false
+
+         // 字符串拼接
+        int a=123;
+        int b=456;
+        String s5=a+""+b;// 123456
+        System.out.println(s5);
+    }
+}
+```
+
+
+
+## 6.6 数组类型(引用类型)
+
++ 定义一个数组类型的变量，使用数组类型`类型[]`，例如，`int[]`。和单个基本类型变量不同，数组变量初始化必须使用`new int[5]`表示创建一个可容纳5个`int`元素的数组。
+
+Java的数组有几个特点：
+
+- **数组所有元素初始化为默认值**，整型都是`0`，浮点型是`0.0`，布尔型是`false`；
+- 数组一旦创建后，大小就不可改变。
+
+要访问数组中的某一个元素，需要使用索引。数组索引从`0`开始，例如，5个元素的数组，索引范围是`0`~`4`。
+
+可以修改数组中的某一个元素，使用赋值语句，例如，`ns[1] = 79;`。
+
+可以用`数组变量.length`获取数组大小：
+
+
+
++ 注意点:
+  1. 数组是引用类型，在使用索引访问数组元素时，如果索引超出范围，运行时将报错
+  2. 注意数组是引用类型，并且数组大小不可变。
+  3. 可以在定义数组时直接指定初始化的元素，这样就不必写出数组大小，而是由编译器自动推算数组大小。
+
+```java
+public class ArrayType {
+    public static void main(String[] args){
+        int[] ns=new int[5];
+        System.out.println(ns.length);// 5
+       // System.out.println(ns[5]);// 访问超出范围限制,报错
+        int[] arr={1,2,3,4,5};
+        String[] names={"ABC","DEF","XYA"};
+        String s1=names[1];
+        System.out.println(s1);
+        names[1]="YBB";
+        System.out.println(s1);
+    }
+}
+```
+
+
+
+# 7. 输入和输出
+
+`System.out.println`中的`println`是`print line`的缩写,打印在一行的意思, 换行可以直接使用`print`方法
+
+
+
+## 7.1 格式化输出
+
++ Java还提供了格式化输出的功能。为什么要格式化输出？因为计算机表示的数据不一定适合人来阅读
+
++ 如果要把数据显示成我们期望的格式，就需要使用格式化输出的功能。格式化输出使用`System.out.printf()`，通过使用占位符`%?`，`printf()`可以把后面的参数格式化成指定格式
+
++ Java的格式化功能提供了多种占位符，可以把各种数据类型“格式化”成指定的字符串：
+
+  | 占位符 | 说明                             |
+  | :----- | :------------------------------- |
+  | %d     | 格式化输出整数                   |
+  | %x     | 格式化输出十六进制整数           |
+  | %f     | 格式化输出浮点数                 |
+  | %e     | 格式化输出科学计数法表示的浮点数 |
+  | %s     | 格式化字符串                     |
+
+  注意，由于%表示占位符，因此，连续两个%%表示一个%字符本身。
+
+​		详细的格式化参数请参考JDK文档[java.util.Formatter](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/Formatter.html#syntax)
+
+## 7.2 输入
+
+```java
+import java.util.Scanner;
+public class FormatterIO {
+    public static void main(String[] args){
+        int a=123456;
+        float b=2.34343f;
+        System.out.printf("%s,%s",a,b);
+        System.out.print(a);
+        System.out.printf("%s,%.2f\n",a,b);
+
+        // 输入
+        Scanner scanner=new Scanner(System.in);
+        System.out.print("Input your name");
+        String name=scanner.nextLine();// 读取一行输入并获取字符串
+        System.out.print("Input your age");
+        int age=scanner.nextInt();//    读取一行输入并获取整数
+        System.out.printf("Hi, %s,you are %d\n",name,age);
+
+        System.out.print("请输入上次考试的成绩");
+        int beforeScore= scanner.nextInt();
+        System.out.print("请输入本次考试的成绩");
+        int nowScore=scanner.nextInt();
+        System.out.printf("你的成绩相对于上次成绩提升得到百分比为: %.2f%%",(float)(nowScore-beforeScore)/nowScore*100);
+
+    }
+}
+```
+
+首先，我们通过`import`语句导入`java.util.Scanner`，`import`是导入某个类的语句，必须放到Java源代码的开头，后面我们在Java的`package`中会详细讲解如何使用`import`。
+
+然后，创建`Scanner`对象并传入`System.in`。`System.out`代表标准输出流，而`System.in`代表标准输入流。直接使用`System.in`读取用户输入虽然是可以的，但需要更复杂的代码，而通过`Scanner`就可以简化后续的代码。
+
+有了`Scanner`对象后，要读取用户输入的字符串，使用`scanner.nextLine()`，要读取用户输入的整数，使用`scanner.nextInt()`。`Scanner`会自动转换数据类型，因此不必手动转换。
+
+
+
+## 8 数组操作方法
+
