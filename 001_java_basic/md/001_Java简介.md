@@ -561,3 +561,92 @@ public class FormatterIO {
 
 ## 8 数组操作方法
 
+## 8.1 遍历
+
++ for循环 
++ foreach(和js不同,没有索引参数)
++ Arrays.toString(快速打印数组)
+
+```java
+// 1. 数组遍历 for 循环
+        int[] arr2 = {1, 2, 3, 4, 5, 6};
+        for (int i = 0; i < arr2.length; i++) {
+            System.out.println(arr2[i]);
+        }
+        // 2. forEach 遍历
+        for (int item : arr2
+        ) {
+            System.out.print(item);
+        }
+        // 3.导入Java标准库 Arrays.toString 快速打印数组
+        System.out.print(Arrays.toString(arr2));// 打印结果为[1,2,3,4,5,6]
+
+        // 4. 按照倒序遍历下面的数组
+        int arr3[] = { 1, 4, 9, 16, 25 };// java 可以使用c/c++ 语言风格的数组
+        for (int i = 0; i < arr3.length; i++) {
+            System.out.print(arr3[arr3.length-i-1]);// 25 16 9 4 1
+        }
+```
+
+
+
+## 8.2 数组排序
+
+1. for循环手动排序 选择排序 冒泡排序
+
+2. java标准库中的Arrays.sort()方法(默认为升序排序)
+
+   ```java
+   		int arr4[] = { 28, 12, 89, 73, 65, 18, 96, 50, 8, 36 };
+           Arrays.sort(arr4);
+           System.out.print('\n');
+           System.out.print(Arrays.toString(arr4));// [8, 12, 18, 28, 36, 50, 65, 73, 89, 96]
+   ```
+
+## 8.3 多维数组 没有指针太简单,跳过
+
+## 8.4 命令行参数
+
+Java程序的入口是`main`方法，而`main`方法**可以接受一个命令行参数，它是一个`String[]`数组**。
+
+这个命令行参数由JVM接收用户输入并传给`main`方法：
+
+```java
+public class Main {
+    public static void main(String[] args) {
+        for (String arg : args) {
+            System.out.println(arg);
+        }
+    }
+}
+```
+
++ 我们可以利用接收到的命令行参数，**根据不同的参数执行不同的代码**。例如，实现一个`-version`参数，打印程序版本号：
+
+```java
+public class Main {
+    public static void main(String[] args) {
+        for (String arg : args) {
+            if ("-version".equals(arg)) {
+                System.out.println("v 1.0");
+                break;
+            }
+        }
+    }
+}
+```
+
+上面这个程序必须在命令行执行，我们先编译它：
+
+```
+$ javac Main.java
+```
+
+然后，执行的时候，给它传递一个`-version`参数：
+
+```
+$ java Main -version
+v 1.0
+```
+
+这样，程序就可以根据传入的命令行参数，作出不同的响应。
