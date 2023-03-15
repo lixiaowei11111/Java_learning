@@ -1,3 +1,4 @@
+
 public class Main{
     // 一个java文件中最外部 只能由一个 public class
     public static void main(String[] args){
@@ -25,7 +26,12 @@ public class Main{
         p2.setName(s1);
         System.out.print(p2.getName());// hello java
         s1[1]="javascript";
-        System.out.print(p2.getName());// hello javascript
+        System.out.println(p2.getName());// hello javascript
+
+        // class 构造函数 静态重载
+        PersonExample pe1=new PersonExample("lxw",22);
+        System.out.println(pe1.getAge());// 22
+        System.out.println(pe1.getName());// lxw
 
     };
 }
