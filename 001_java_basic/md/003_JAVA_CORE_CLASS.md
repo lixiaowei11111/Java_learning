@@ -774,3 +774,635 @@ Java核心库提供的包装类型可以把基本类型包装为`class`；
 整数和浮点数的包装类型都继承自`Number`；
 
 包装类型提供了大量实用方法。
+
+
+
+## 6. JavaBean
+
+在Java中，有很多`class`的定义都符合这样的规范：
+
+- 若干`private`实例字段；
+- 通过`public`方法来读写实例字段。
+
+例如：
+
+```java
+public class Person {
+    private String name;
+    private int age;
+
+    public String getName() {
+        return this.name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public int getAge() {
+        return this.age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
+    }
+}
+```
+
+
+
+如果读写方法符合以下这种命名规范：
+
+```java
+// 读方法:
+public Type getXyz()
+// 写方法:
+public void setXyz(Type value)
+```
+
+那么这种`class`被称为`JavaBean`
+
+上面的字段是`xyz`，那么读写方法名分别以`get`和`set`开头，并且后接大写字母开头的字段名`Xyz`，因此两个读写方法名分别是`getXyz()`和`setXyz()`。
+
+`boolean`字段比较特殊，它的读方法一般命名为`isXyz()`：
+
+```java
+// 读方法:
+public boolean isChild()
+// 写方法:
+public void setChild(boolean value)
+```
+
+我们通常把一组对应的读方法（`getter`）和写方法（`setter`）称为属性（`property`）。例如，`name`属性：
+
+- 对应的读方法是`String getName()`
+- 对应的写方法是`setName(String)`
+
+只有`getter`的属性称为只读属性（read-only），例如，定义一个age只读属性：
+
+- 对应的读方法是`int getAge()`
+- 无对应的写方法`setAge(int)`
+
+类似的，只有`setter`的属性称为只写属性（write-only）。
+
+很明显，只读属性很常见，只写属性不常见。
+
+
+
+属性只需要定义`getter`和`setter`方法，不一定需要对应的字段。例如，`child`只读属性定义如下：
+
+```java
+public class Person {
+    private String name;
+    private int age;
+
+    public String getName() {
+        return this.name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public int getAge() {
+        return this.age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
+    }
+
+    public boolean isChild() {
+        return this.age <= 6;
+    }
+}
+```
+
+可以看出，`getter`和`setter`也是一种数据封装的方法。
+
+### JavaBean 的作用
+
+JavaBean主要用来传递数据，即把一组数据组合成一个JavaBean便于传输。此外，JavaBean可以方便地被IDE工具分析，生成读写属性的代码，主要用在图形界面的可视化设计中。
+
+
+
+
+
+### 枚举JavaBean属性
+
+要枚举一个JavaBean的所有属性，可以直接使用Java核心库提供的`Introspector`：
+
+```java
+import java.beans.*;// 引入Introspector
+import static java.lang.System.*;// 引入System上的所有静态属性
+public class Main {
+    public static void main(String[] args) throws Exception{
+        BeanInfo info=Introspector.getBeanInfo(Student.class);// Student上的class为静态属性
+        for (PropertyDescriptor pd:info.getPropertyDescriptors()
+             ) {
+            out.println(pd.getName());
+            out.println(""+pd.getReadMethod());
+            out.println(""+pd.getWriteMethod()   );
+        }
+    }
+}
+class Student {
+    private String name;
+    private int age;
+
+    public String getName() {
+        return this.name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public int getAge() {
+        return this.age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
+    }
+
+    public boolean isChild() {
+        return this.age <= 6;
+    }
+}
+```
+
+运行上述代码，可以列出所有的属性，以及对应的读写方法。注意`class`属性是从`Object`继承的`getClass()`方法带来的。
+
+### 小结
+
+JavaBean是一种符合命名规范的`class`，它通过`getter`和`setter`来定义属性；
+
+属性是一种通用的叫法，并非Java语法规定；
+
+可以利用IDE快速生成`getter`和`setter`；
+
+使用`Introspector.getBeanInfo()`可以获取属性列表。
+
+
+
+## 7. Enum class | 枚举类
+
+在Java中，我们可以通过`static final`来定义常量。例如，我们希望定义周一到周日这7个常量，可以用7个不同的`int`表示：
+
+```java
+public class Main {
+    public static void main(String[] args){
+        int day=0;
+        if(day==Weekday.SUN||day==Weekday.SAT){
+            // TODO
+        }
+    }
+}
+
+class Weekday{
+    // Java 中通过 static final 来定义常量
+    public static final int SUN=0;
+    public static final int MON=1;
+    public static final int TUS=2;
+    public static final int WED=3;
+    public static final int THU=4;
+    public static final int FRI=5;
+    public static final int SAT=6;
+}
+```
+
+使用常量的时候，可以这么引用：
+
+```java
+if (day == Weekday.SAT || day == Weekday.SUN) {
+    // TODO: work at home
+}
+```
+
+也可以把常量定义为字符串类型，例如，定义3种颜色的常量：
+
+```java
+public class Color {
+    public static final String RED = "r";
+    public static final String GREEN = "g";
+    public static final String BLUE = "b";
+}
+```
+
+使用常量的时候，可以这么引用：
+
+```java
+String color = ...
+if (Color.RED.equals(color)) {
+    // TODO:
+}
+```
+
+无论是`int`常量还是`String`常量，使用这些常量来表示一组枚举值的时候，有一个严重的问题就是，编译器无法检查每个值的合理性。例如：
+
+```java
+if (weekday == 6 || weekday == 7) {
+    if (tasks == Weekday.MON) {
+        // TODO:
+    }
+}
+```
+
+上述代码编译和运行均不会报错，但存在两个问题：
+
+- 注意到`Weekday`定义的常量范围是`0`~`6`，并不包含`7`，编译器无法检查不在枚举中的`int`值；
+- 定义的常量仍可与其他变量比较，但其用途并非是枚举星期值。
+
+### enum类型
+
+通过`enum`定义的枚举类，和其他的`class`有什么区别？
+
+答案是没有任何区别。`enum`定义的类型就是`class`，只不过它有以下几个特点：
+
+- 定义的`enum`类型总是继承自`java.lang.Enum`，且**无法被继承**；
+- 只能定义出`enum`的实例，而无法通过`new`操作符创建`enum`的实例；
+- 定义的每个实例都是引用类型的唯一实例；
+- 可以将`enum`类型用于`switch`语句。
+
+例如，我们定义的`Color`枚举类：
+
+```java
+public enum Color {
+    RED, GREEN, BLUE;
+}
+```
+
+编译器编译出的`class`大概就像这样：
+
+```java
+public final class Color extends Enum { // 继承自Enum，标记为final class
+    // 每个实例均为全局唯一:
+    public static final Color RED = new Color();
+    public static final Color GREEN = new Color();
+    public static final Color BLUE = new Color();
+    // private构造方法，确保外部无法调用new操作符:
+    private Color() {}
+}
+```
+
+所以，编译后的`enum`类和普通`class`并没有任何区别。但是我们自己无法按定义普通`class`那样来定义`enum`，必须使用`enum`关键字，这是Java语法规定的。
+
+因为`enum`是一个`class`，每个枚举的值都是`class`实例，因此，这些实例有一些方法：
+
+#### name()
+
+返回常量名，例如：
+
+```java
+String s = Weekday.SUN.name(); // "SUN"
+```
+
+#### ordinal()
+
+返回定义的常量的顺序，从0开始计数，例如：
+
+```java
+int n = Weekday.MON.ordinal(); // 1
+```
+
+改变枚举常量定义的顺序就会导致`ordinal()`返回值发生变化。例如：
+
+```java
+public enum Weekday {
+    SUN, MON, TUE, WED, THU, FRI, SAT;
+}
+```
+
+和
+
+```java
+public enum Weekday {
+    MON, TUE, WED, THU, FRI, SAT, SUN;
+}
+```
+
+的`ordinal`就是不同的。如果在代码中编写了类似`if(x.ordinal()==1)`这样的语句，就要保证`enum`的枚举顺序不能变。新增的常量必须放在最后。
+
+有些童鞋会想，`Weekday`的枚举常量如果要和`int`转换，使用`ordinal()`不是非常方便？比如这样写：
+
+```java
+String task = Weekday.MON.ordinal() + "/ppt";
+saveToFile(task);
+```
+
+但是，如果不小心修改了枚举的顺序，编译器是无法检查出这种逻辑错误的。**要编写健壮的代码，就不要依靠`ordinal()`的返回值**。因为`enum`本身是`class`，所以我们可以定义`private`的构造方法，并且，给每个枚举常量添加字段：
+
+```java
+public class Main {
+    public static void main(String[] args){
+        Weekday2 wk2=Weekday2.MON;
+        if(wk2.dayValue==6||wk2.dayValue==0){
+            System.out.println("at home");
+        }else {
+            System.out.println("on work");
+        };
+    }
+}
+
+enum Weekday2{
+    SUN(0),MON(1),TUE(2),WED(3),THU(4),FRI(5),SAT(6);
+    public final int dayValue;
+    private Weekday2(int dayValue){
+        this.dayValue=dayValue;
+    }
+}
+
+```
+
+这样就无需担心顺序的变化，新增枚举常量时，也需要指定一个`int`值。
+
+ 注意：枚举类的字段也可以是非final类型，即可以在运行期修改，但是不推荐这样做！
+
+默认情况下，对枚举常量调用`toString()`会返回和`name()`一样的字符串。**但是，`toString()`可以被覆写，而`name()`则不行**。我们可以给`Weekday`添加`toString()`方法：
+
+```java
+public class Main {
+    public static void main(String[] args) {
+        Weekday2 wk2 = Weekday2.MON;
+        if (wk2.dayValue == 6 || wk2.dayValue == 0) {
+            System.out.println("" + wk2 + "at home");
+        } else {
+            System.out.println("" + wk2 + "on work");
+        }
+        ;
+    }
+}
+enum Weekday2 {
+    SUN(0, "星期日"), MON(1, "星期一"), TUE(2, "星期二"), WED(3, "星期三"), THU(4, "星期四"), FRI(5, "星期五"), SAT(6, "星期六");
+    public final int dayValue;
+    public final String chinese;
+
+    private Weekday2(int dayValue, String chinese) {
+        this.dayValue = dayValue;
+        this.chinese = chinese;
+    }
+
+    @Override
+    public String toString() {
+        return this.chinese;
+    }
+}
+
+```
+
+**覆写`toString()`的目的是在输出时更有可读性。**
+
+### switch
+
+最后，枚举类可以应用在`switch`语句中。因为枚举类天生具有类型信息和有限个枚举常量，所以比`int`、`String`类型更适合用在`switch`语句中：
+
+```java
+switch (wk2) {
+    case SUN:
+    case MON:
+    case TUE:
+    case WED:
+    case SAT:
+    case FRI:
+        System.out.println("Today is" + day + ". work at office");
+        break;
+    default:
+        throw new RuntimeException("cannot process " + day);
+}
+```
+
+加上`default`语句，可以在漏写某个枚举常量时自动报错，从而及时发现错误。
+
+### 小结
+
+Java使用`enum`定义枚举类型，==它被编译器编译为`final class Xxx extends Enum { … }`==；
+
+通过`name()`获取常量定义的字符串，注意不要使用`toString()`；
+
+通过`ordinal()`返回常量定义的顺序（无实质意义）；
+
+可以为`enum`编写构造方法、字段和方法
+
+`enum`的构造方法要声明为`private`，字段强烈建议声明为`final`；
+
+`enum`适合用在`switch`语句中。
+
+
+
+## 8. Record class | java 14
+
+使用`String`、`Integer`等类型的时候，这些类型都是不变类，一个不变类具有以下特点：
+
+1. 定义class时使用`final`，无法派生子类；
+2. 每个字段使用`final`，保证创建实例后无法修改任何字段。
+
+假设我们希望定义一个`Point`类，有`x`、`y`两个变量，同时它是一个不变类，可以这么写：
+
+```java
+public final class Point {
+    private final int x;
+    private final int y;
+
+    public Point(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    public int x() {
+        return this.x;
+    }
+
+    public int y() {
+        return this.y;
+    }
+}
+```
+
+为了保证不变类的比较，还需要正确覆写`equals()`和`hashCode()`方法，这样才能在集合类中正常使用。后续我们会详细讲解正确覆写`equals()`和`hashCode()`，这里演示`Point`不变类的写法目的是，这些代码写起来都非常简单，但是很繁琐。
+
+### record
+
+从Java 14开始，引入了新的`Record`类。我们定义`Record`类时，使用关键字`record`。把上述`Point`类改写为`Record`类，代码如下：
+
+```java
+// Record
+public class Main {
+    public static void main(String[] args) {
+        Point p = new Point(123, 456);
+        System.out.println(p.x());
+        System.out.println(p.y());
+        System.out.println(p);
+    }
+}
+
+public record Point(int x, int y) {}
+```
+
+ Run
+
+仔细观察`Point`的定义：
+
+```java
+public record Point(int x, int y) {}
+```
+
+把上述定义改写为class，相当于以下代码：
+
+```java
+public final class Point extends Record {
+    private final int x;
+    private final int y;
+
+    public Point(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    public int x() {
+        return this.x;
+    }
+
+    public int y() {
+        return this.y;
+    }
+
+    public String toString() {
+        return String.format("Point[x=%s, y=%s]", x, y);
+    }
+
+    public boolean equals(Object o) {
+        ...
+    }
+    public int hashCode() {
+        ...
+    }
+}
+```
+
+除了用`final`修饰class以及每个字段外，编译器还自动为我们创建了构造方法，和字段名同名的方法，以及覆写`toString()`、`equals()`和`hashCode()`方法。
+
+换句话说，使用`record`关键字，可以一行写出一个不变类。
+
+和`enum`类似，我们自己不能直接从`Record`派生，只能通过`record`关键字由编译器实现继承。
+
+### 构造方法
+
+编译器默认按照`record`声明的变量顺序自动创建一个构造方法，并在方法内给字段赋值。那么问题来了，如果我们要检查参数，应该怎么办？
+
+假设`Point`类的`x`、`y`不允许负数，我们就得给`Point`的构造方法加上检查逻辑：
+
+```java
+public record Point(int x, int y) {
+    public Point {
+        if (x < 0 || y < 0) {
+            throw new IllegalArgumentException();
+        }
+    }
+}
+```
+
+注意到方法`public Point {...}`被称为Compact Constructor，它的目的是让我们编写检查逻辑，编译器最终生成的构造方法如下：
+
+```java
+public final class Point extends Record {
+    public Point(int x, int y) {
+        // 这是我们编写的Compact Constructor:
+        if (x < 0 || y < 0) {
+            throw new IllegalArgumentException();
+        }
+        // 这是编译器继续生成的赋值代码:
+        this.x = x;
+        this.y = y;
+    }
+    ...
+}
+```
+
+作为`record`的`Point`仍然可以添加静态方法。一种常用的静态方法是`of()`方法，用来创建`Point`：
+
+```java
+public record Point(int x, int y) {
+    public static Point of() {
+        return new Point(0, 0);
+    }
+    public static Point of(int x, int y) {
+        return new Point(x, y);
+    }
+}
+```
+
+这样我们可以写出更简洁的代码：
+
+```java
+var z = Point.of();
+var p = Point.of(123, 456);
+```
+
+### 小结
+
+从Java 14开始，提供新的`record`关键字，可以非常方便地定义Data Class：
+
+- 使用`record`定义的是不变类；
+- 可以编写Compact Constructor对参数进行验证；
+- 可以定义静态方法。
+
+
+
+## 9. BigInteger
+
+在Java中，由**CPU原生提供的整型最大范围是64位`long`型整数**。使用`long`型整数可以直接通过CPU指令进行计算，速度非常快。
+
+如果我们使用的整数范围超过了`long`型怎么办？这个时候，就只能用软件来模拟一个大整数。`java.math.BigInteger`就是用来表示任意大小的整数。`BigInteger`内部用一个`int[]`数组来模拟一个非常大的整数：
+
+```java
+BigInteger bi=new BigInteger("131231231321313");
+System.out.println(bi.pow(3));// 2260016507372730652493204303175998390811297
+```
+
+对`BigInteger`做运算的时候，只能使用实例方法，例如，加法运算：
+
+```java
+BigInteger bi=new BigInteger("131231231321313");
+System.out.println(bi.pow(3));// 2260016507372730652493204303175998390811297
+BigInteger bi2=new BigInteger("1");
+BigInteger bi3=bi2.add(bi);
+System.out.println(bi3);// 131231231321314
+```
+
+**和`long`型整数运算比，`BigInteger`不会有范围限制**，但缺点是==速度比较慢==。
+
+也可以把`BigInteger`**转换**成`long`型：
+
+```java
+BigInteger bi=new BigInteger("131231231321313");
+System.out.println(bi.pow(3));// 2260016507372730652493204303175998390811297
+BigInteger bi2=new BigInteger("1");
+BigInteger bi3=bi2.add(bi);
+System.out.println(bi3);// 131231231321314
+System.out.println(bi3.longValue());// 转为 long型 131231231321314
+System.out.println(bi3.multiply(bi3).longValueExact());//compiler error BigInteger out of long range
+System.out.println(0.1+0.2);// 0.30000000000000004
+```
+
+使用`longValueExact()`方法时，如果超出了`long`型的范围，会抛出`ArithmeticException`。
+
+`BigInteger`和`Integer`、`Long`一样，也是不可变类，并且也继承自`Number`类。因为`Number`定义了转换为基本类型的几个方法：
+
+- 转换为`byte`：`byteValue()`
+- 转换为`short`：`shortValue()`
+- 转换为`int`：`intValue()`
+- 转换为`long`：`longValue()`
+- 转换为`float`：`floatValue()`
+- 转换为`double`：`doubleValue()`
+
+因此，通过上述方法，可以把`BigInteger`转换成基本类型。如果`BigInteger`表示的范围超过了基本类型的范围，转换时将丢失高位信息，即结果不一定是准确的。**如果需要==准确==地转换成基本类型，可以使用`intValueExact()`、`longValueExact()`等方法，在转换时如果超出范围，将直接抛出`ArithmeticException`异常**。
+
+如果`BigInteger`的值甚至超过了`float`的最大范围（3.4x1038），那么返回的float是什么呢？
+
+```java
+BigInteger n = new BigInteger("999999").pow(99);
+float f = n.floatValue();
+System.out.println(f);// Infinity
+```
+
