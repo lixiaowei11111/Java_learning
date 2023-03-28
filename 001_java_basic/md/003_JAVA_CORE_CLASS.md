@@ -1406,3 +1406,51 @@ float f = n.floatValue();
 System.out.println(f);// Infinity
 ```
 
+
+
+## 10. BigDecimal(不重要,暂时跳过)
+
+1. `scale()`小数点位数
+   1. 可以对一个`BigDecimal`设置它的`scale`，如果精度比原始值低，那么按照指定的方法进行四舍五入或者直接截断：
+2. `stripTrailingZeros()` 去掉末尾的0
+   1. 不会改变原数据, 返回一个新的 `BigDecimal`类型
+   2. 经过stripeTrailingZeros方法处理后,如果一个`BigDecimal`的`scale()`返回负数，例如，`-2`，表示这个数是个整数，并且末尾有2个0。
+
+和`BigInteger`类似，**`BigDecimal`可以表示一个任意大小且精度完全准确的浮点数**。
+
+```java
+BigDecimal bd1=new BigDecimal("1234.567");
+System.out.println(bd1.multiply(bd1));// 1524155.677489
+```
+
++ `BigDecimal`用`scale()`查询小数位数，例如：
+
+```java
+BigDecimal bd1=new BigDecimal("1234.567");
+System.out.println(bd1.multiply(bd1));// 1524155.677489
+// 用scale() 查询小数位数
+System.out.println(bd1.scale());// 3
+```
+
++ 通过`BigDecimal`的`stripTrailingZeros()`方法，可以将一个`BigDecimal`格式化为一个相等的，但去掉了末尾0的`BigDecimal`：
+
+```java
+// stripTrailingZeros() 去掉末尾的0;
+BigDecimal bd2=new BigDecimal("123456.4500");
+System.out.println(bd2.scale());//4
+// stripTrailingZeros 返回一个新变量,不会改变原来的
+BigDecimal bd3=bd2.stripTrailingZeros();
+System.out.println(bd3.scale());// 2
+
+BigDecimal bd4=new BigDecimal("13131321000");
+// 经过stripTrailingZeros 处理后scale 返回的是一个负数, 则表示末尾有几个0的整数
+BigDecimal bd5=bd4.stripTrailingZeros();
+System.out.println(bd5.scale());// -3
+```
+
++ 可以对一个`BigDecimal`设置它的`scale`，如果精度比原始值低，那么按照指定的方法进行四舍五入或者直接截断：
+
+  ```java
+  ```
+
+  
