@@ -314,7 +314,7 @@ JVM总是动态加载`class`，可以在运行期根据条件来控制加载clas
 
 
 
-## 1. 通过`Class`实例,获取对象的`class`定义的字段信息
+## 1. 通过`Class`实例,获取对象的`class`定义的`Field`字段信息
 
 对任意的一个`Object`实例，只要我们获取了它的`Class`，就可以获取它的一切信息。
 
@@ -513,3 +513,281 @@ Java的反射API提供的`Field`类封装了字段的所有信息：
 通过Field实例可以读取或设置某个对象的字段，如果存在访问限制，要首先调用`setAccessible(true)`来访问非`public`字段。
 
 通过反射读写字段是一种非常规方法，它会破坏对象的封装。
+
+
+
+# 3. 调用方法
+
+## 1. 通过`Class`实例获取`Method`方法的信息的方式
+
+我们已经能通过`Class`实例获取所有`Field`对象，同样的，可以通过`Class`实例获取所有`Method`信息。`Class`类提供了以下几个方法来获取`Method`：
+
+- `Method getMethod(name, Class...)`：获取某个`public`的`Method`（包括父类）
+- `Method getDeclaredMethod(name, Class...)`：获取当前类的某个`Method`（不包括父类）
+- `Method[] getMethods()`：获取所有`public`的`Method`（包括父类）
+- `Method[] getDeclaredMethods()`：获取当前类的所有`Method`（不包括父类）
+
+```java
+public class Main {
+    public static void main(String[] args) {
+        try {
+            // 获取 Class 的实例,
+            Class clsStu=Student.class;
+            // 获取public 方法 getScore,需要参数为 String
+            System.out.println(clsStu.getMethod("getScore", String.class));// public int Student.getScore(java.lang.String)
+            // 获取继承的public方法getName,无需参数
+            System.out.println(clsStu.getMethod("getName"));// public java.lang.String Person.getName()
+            // 获取 非public 方法getGrade,参数为Integer
+            System.out.println(clsStu.getDeclaredMethod("getGrade", int.class));// private int Student.getGrade(int)
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+class Person{
+    public String getName(){
+        return "Person";
+    }
+}
+class Student extends Person{
+    public int getScore(String type){
+        return 99;
+    }
+    private int getGrade(int year){
+        return 1;
+    }
+}
+```
+
+上述代码首先获取`Student`的`Class`实例，然后，分别获取`public`方法、继承的`public`方法以及`private`方法，打印出的`Method`类似：
+
+```
+public int Student.getScore(java.lang.String)
+public java.lang.String Person.getName()
+private int Student.getGrade(int)
+```
+
+**一个`Method`对象包含一个方法的所有信息**：
+
+- `getName()`：返回方法名称，例如：`"getScore"`；
+- `getReturnType()`：返回方法返回值类型，也是一个Class实例，例如：`String.class`；
+- `getParameterTypes()`：返回方法的参数类型，是一个Class数组，例如：`{String.class, int.class}`；
+- `getModifiers()`：返回方法的修饰符，它是一个`int`，不同的bit表示不同的含义。
+
+
+
+## 2. 调用方法
+
+1. `invoke`
+
+当我们获取到一个`Method`对象时，就可以对它进行调用。我们以下面的代码为例：
+
+```java
+String s = "Hello world";
+String r = s.substring(6); // "world"
+```
+
+如果用反射来调用`substring`方法，需要以下代码：
+
+```java
+import java.lang.reflect.Method;
+
+public class Main {
+    public static void main(String[] args) {
+        try {
+            // 使用反射 来调用 String的 substring 方法
+            // String 对象
+            String s="HelloYbb";
+            // 获取String substring(int)方法，参数为int:
+            Method m=s.getClass().getMethod("substring", int.class);
+            // 在s对象上调用该方法并获取结果(使用invoke调用):
+            String r=(String) m.invoke(s,6);// bb
+            System.out.println(r);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+## 3. 调用静态方法
+
+如果获取到的Method表示一个静态方法，调用静态方法时，由于无需指定实例对象，所以`invoke`方法传入的**第一个参数永远为`null`**。我们以`Integer.parseInt(String)`为例：
+
+```java
+public class Main {
+    public static void main(String[] args) throws Exception {
+       // 获取Integer.parseInt(String)方法，参数为String:
+        Method m=Integer.class.getMethod("parseInt", String.class);
+        // 调用该静态方法并获取结果
+        Integer n=(Integer) m.invoke(null,"123456");
+        System.out.println(n);// 123456
+    }
+}
+```
+
+
+
+## 4. 调用非public方法
+
+和Field类似，对于非public方法，我们虽然可以通过`Class.getDeclaredMethod()`获取该方法实例，但直接对其调用将得到一个`IllegalAccessException`。为了调用非public方法，我们通过==`Method.setAccessible(true)`==允许其调用：
+
+```java
+import java.lang.reflect.Method;
+
+public class Main {
+    public static void main(String[] args) {
+        try {
+            // 3. 调用非 public method 使用 setAccessible(true)方法
+            Student s2=new Student();
+            Method m3=s2.getClass().getDeclaredMethod("getGrade", int.class);
+            // 使用 setAccessible 来接触对 非public 成员的限制
+            m3.setAccessible(true);
+            System.out.println(m3.invoke(s2,2023));// 1
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+class Person {
+    public String getName() {
+        return "Person";
+    }
+}
+class Student extends Person {
+    public int getScore(String type) {
+        return 99;
+    }
+
+    private int getGrade(int year) {
+        return 1;
+    }
+}
+```
+
+此外，`setAccessible(true)`可能会失败。**如果JVM运行期存在`SecurityManager`，那么它会根据规则进行检查，有可能阻止`setAccessible(true)`**。例如，某个`SecurityManager`可能不允许对`java`和`javax`开头的`package`的类调用`setAccessible(true)`，这样可以保证JVM核心库的安全。
+
+
+
+## 5. 多态
+
+**多态原则：总是调用实际类型的覆写方法（如果存在）。**
+
+我们来考察这样一种情况：一个`Person`类定义了`hello()`方法，并且它的子类`Student`也覆写了`hello()`方法，那么，从`Person.class`获取的`Method`，作用于`Student`实例时，调用的方法到底是哪个？
+
+```java
+import java.lang.reflect.Method;
+
+public class Main {
+    public static void main(String[] args) {
+        try {
+            // 4. 多态原则 总是调用实际类型的覆写方法
+            Person p2 = new Person();
+            Method m4 = p2.getClass().getDeclaredMethod("hello");
+            m4.invoke(new Student());// Student Hello
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+class Person {
+    public void hello() {
+        System.out.println("Person Hello");
+    }
+}
+class Student extends Person {
+    public void hello() {
+        System.out.println("Student Hello");
+    }
+}
+```
+
+运行上述代码，发现打印出的是`Student:hello`，因此，使用反射调用方法时，仍然遵循多态原则：即总是调用实际类型的覆写方法（如果存在）。上述的反射代码：
+
+```java
+Method m = Person.class.getMethod("hello");
+m.invoke(new Student());
+```
+
+实际上相当于：
+
+```java
+Person p = new Student();
+p.hello();
+```
+
+## 6. 小结
+
+Java的反射API提供的Method对象封装了方法的所有信息：
+
+通过`Class`实例的方法可以获取`Method`实例：`getMethod()`，`getMethods()`，`getDeclaredMethod()`，`getDeclaredMethods()`；
+
+通过`Method`实例可以获取方法信息：`getName()`，`getReturnType()`，`getParameterTypes()`，`getModifiers()`；
+
+通过`Method`实例可以调用某个对象的方法：`Object invoke(Object instance, Object... parameters)`；
+
+通过设置`setAccessible(true)`来访问非`public`方法；
+
+通过反射调用方法时，仍然遵循多态原则。
+
+
+
+# 4. 调用构造方法
+
+我们通常使用`new`操作符创建新的实例：
+
+```java
+Person p = new Person();
+```
+
+如果通过反射来创建新的实例，可以调用Class提供的newInstance()方法：
+
+```java
+Person p = Person.class.newInstance();
+```
+
+调用Class.newInstance()的局限是，它只能调用该类的public无参数构造方法。如果构造方法带有参数，或者不是public，就无法直接通过Class.newInstance()来调用。
+
+为了调用任意的构造方法，Java的反射API提供了**`Constructor`对象**，它包含**一个构造方法的所有信息**，可以创建一个实例。Constructor对象和Method非常类似，不同之处仅在于它是一个构造方法，并且，调用结果总是返回实例：
+
+```java
+import java.lang.reflect.Constructor;
+
+public class Main {
+    public static void main(String[] args) {
+        try {
+            // 获取构造方法Integer(int)
+            Constructor cons1 = Integer.class.getConstructor(int.class);
+            Integer n1 = (Integer) cons1.newInstance(123);
+            System.out.println(n1);// 123
+            // 获取构造方法Integer(String)
+            Constructor cons2 = Integer.class.getConstructor(String.class);
+            Integer n2 = (Integer) cons2.newInstance("456");
+            System.out.println(n2);// 456
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+}
+```
+
+通过Class实例获取Constructor的方法如下：
+
+- `getConstructor(Class...)`：获取某个`public`的`Constructor`；
+- `getDeclaredConstructor(Class...)`：获取某个`Constructor`；
+- `getConstructors()`：获取所有`public`的`Constructor`；
+- `getDeclaredConstructors()`：获取所有`Constructor`。
+
+==**注意`Constructor`总是当前类定义的构造方法，和父类无关，因此不存在多态的问题。**==
+
+**调用非`public`的`Constructor`时，必须首先通过`setAccessible(true)`设置允许访问。`setAccessible(true)`可能会失败**。
+
+### 小结
+
+`Constructor`对象封装了构造方法的所有信息；
+
+通过`Class`实例的方法可以获取`Constructor`实例：`getConstructor()`，`getConstructors()`，`getDeclaredConstructor()`，`getDeclaredConstructors()`；
+
+通过`Constructor`实例可以创建一个实例对象：`newInstance(Object... parameters)`； 通过设置`setAccessible(true)`来访问非`public`构造方法。
