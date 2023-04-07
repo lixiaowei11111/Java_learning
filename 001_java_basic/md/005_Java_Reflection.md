@@ -791,3 +791,348 @@ public class Main {
 通过`Class`实例的方法可以获取`Constructor`实例：`getConstructor()`，`getConstructors()`，`getDeclaredConstructor()`，`getDeclaredConstructors()`；
 
 通过`Constructor`实例可以创建一个实例对象：`newInstance(Object... parameters)`； 通过设置`setAccessible(true)`来访问非`public`构造方法。
+
+
+
+# 5. 获取继承关系
+
+当我们获取到某个`Class`对象时，实际上就获取到了一个类的类型：
+
+```java
+Class cls = String.class; // 获取到String的Class
+```
+
+还可以用实例的`getClass()`方法获取：
+
+```java
+String s = "";
+Class cls = s.getClass(); // s是String，因此获取到String的Class
+```
+
+最后一种获取`Class`的方法是通过`Class.forName("")`，传入`Class`的完整类名获取：
+
+```java
+Class s = Class.forName("java.lang.String");
+```
+
+这三种方式获取的`Class`实例都是同一个实例，因为JVM对每个加载的`Class`只创建一个`Class`实例来表示它的类型。
+
+## 1. 获取父类的Class(getSuperClass)
+
+有了`Class`实例，我们还可以获取它的父类的`Class`：
+
+```java
+public class Main {
+    public static void main(String[] args) {
+
+        // 1. getSuperClass 获取 父级的class
+        Class i = Integer.class;
+        Class n = i.getSuperclass();
+        System.out.println(n); //class java.lang.Number
+        Class o = n.getSuperclass();
+        System.out.println(o);// class java.lang.Object
+        System.out.println(o.getSuperclass());// null
+    }
+}
+```
+
+运行上述代码，可以看到，`Integer`的父类类型是`Number`，`Number`的父类是`Object`，`Object`的父类是`null`。除`Object`外，其他任何非`interface`的`Class`都必定存在一个父类类型。
+
+## 2. 获取interface(getInterfaces())
+
+由于一个类可能实现一个或多个接口，通过`Class`我们就可以查询到实现的接口类型。例如，查询`Integer`实现的接口：
+
+```java
+public class Main {
+    public static void main(String[] args) {
+        // 获取interface 使用getInterfaces() 方法
+        Class s = Integer.class;
+        Class[] is = s.getInterfaces();
+        for (Class item : is) {
+            System.out.println(item);// interface java.lang.Comparable
+        }
+    }
+}
+
+```
+
+运行上述代码可知，`Integer`实现的接口有：
+
+- java.lang.Comparable
+- java.lang.constant.Constable
+- java.lang.constant.ConstantDesc
+
+要特别注意：`getInterfaces()`只返回当前类直接实现的接口类型，并不包括其父类实现的接口类型：
+
+```java
+public class Main {
+    public static void main(String[] args) throws Exception {
+        Class s = Integer.class.getSuperclass();
+        Class[] is = s.getInterfaces();
+        for (Class i : is) {
+            System.out.println(i);
+        }
+    }
+}
+```
+
+`Integer`的父类是`Number`，`Number`实现的接口是`java.io.Serializable`。
+
+此外，==对所有`interface`的`Class`调用`getSuperclass()`返回的是`null`==，获取接口的父接口要用`getInterfaces()`：
+
+```java
+System.out.println(java.io.DataInputStream.class.getSuperclass()); // java.io.FilterInputStream，因为DataInputStream继承自FilterInputStream
+System.out.println(java.io.Closeable.class.getSuperclass()); // null，对接口调用getSuperclass()总是返回null，获取接口的父接口要用getInterfaces()
+```
+
+**如果一个类没有实现任何`interface`，那么`getInterfaces()`返回空数组。**
+
+## 3. 继承关系(instanceof  isAssignableFrom())
+
+当我们判断一个实例是否是某个类型时，正常情况下，使用`instanceof`操作符：
+
+```java
+Object n2=Integer.valueOf(123);
+System.out.println(n2 instanceof Double);// false
+System.out.println(n2 instanceof Integer);// true
+System.out.println(n2 instanceof Number);// true
+System.out.println(n2 instanceof java.io.Serializable);// true
+```
+
+如果是两个`Class`实例，要判断一个向上转型是否成立，可以调用`isAssignableFrom()`：
+
+```java
+// 如果是两个Class实例，要判断一个向上转型是否成立，可以调用isAssignableFrom()：
+        System.out.println(Integer.class.isAssignableFrom(Integer.class));// true ，因为Integer可以赋值给Integer
+        System.out.println(Number.class.isAssignableFrom(Integer.class));// true ，因为Integer可以赋值给Number
+        System.out.println(Object.class.isAssignableFrom(Integer.class));// true ，因为Integer可以赋值给Object
+        System.out.println(Integer.class.isAssignableFrom(Number.class));// false ，因为Number不能赋值给Integer
+```
+
+## 4. 小结
+
+通过`Class`对象可以获取继承关系：
+
+- `Class getSuperclass()`：获取父类类型；
+- `Class[] getInterfaces()`：获取当前类实现的所有接口。
+
+通过`Class`对象的`isAssignableFrom()`方法可以判断一个向上转型是否可以实现。
+
+
+
+# 6. 动态代理(类似于js 的Proxy的)
+
+我们来比较Java的`class`和`interface`的区别：
+
+- 可以实例化`class`（非`abstract`）；
+- 不能实例化`interface`。
+
+所有`interface`类型的变量总是通过某个实例向上转型并赋值给接口类型变量的：
+
+```java
+CharSequence cs = new StringBuilder();
+```
+
+有没有可能不编写实现类，直接在运行期创建某个`interface`的实例呢？
+
+这是可能的，因为Java标准库提供了一种动态代理（Dynamic Proxy）的机制：可以在运行期动态创建某个`interface`的实例。
+
+什么叫运行期动态创建？听起来好像很复杂。所谓动态代理，是和静态相对应的。我们来看静态代码怎么写：
+
+```java
+public interface Hello {
+    void morning(String name);
+}
+```
+
+编写实现类：
+
+```java
+public class HelloWorld implements Hello {
+    public void morning(String name) {
+        System.out.println("Good morning, " + name);
+    }
+}
+```
+
+创建实例，转型为接口并调用：
+
+```java
+Hello hello = new HelloWorld();
+hello.morning("Bob");
+```
+
+这种方式就是我们通常编写代码的方式。
+
+还有一种方式是动态代码，我们仍然先定义了接口`Hello`，但是我们并不去编写实现类，而是直接通过JDK提供的一个`Proxy.newProxyInstance()`创建了一个`Hello`接口对象。这种没有实现类但是在运行期动态创建了一个接口对象的方式，我们称为动态代码。JDK提供的动态创建接口对象的方式，就叫动态代理。
+
+一个最简单的动态代理实现如下：
+
+```java
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+public class Main {
+    public static void main(String[] args) {
+        InvocationHandler handler = new InvocationHandler() {
+            @Override
+            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                System.out.println(method);
+                if (method.getName().equals("morning")) {
+                    System.out.println("Good morning, " + args[0]);
+                }
+                return null;
+            }
+        };
+        Hello hello = (Hello) Proxy.newProxyInstance(
+            Hello.class.getClassLoader(), // 传入ClassLoader
+            new Class[] { Hello.class }, // 传入要实现的接口
+            handler); // 传入处理调用方法的InvocationHandler
+        hello.morning("Bob");
+    }
+}
+
+interface Hello {
+    void morning(String name);
+}
+
+```
+
+在运行期动态创建一个`interface`实例的方法如下：
+
+1. 定义一个`InvocationHandler`实例，它负责实现接口的方法调用；
+2. 通过`Proxy.newProxyInstance()`创建`interface`实例，它需要3个参数：
+   1. 使用的`ClassLoader`，通常就是接口类的`ClassLoader`；
+   2. 需要实现的接口数组，至少需要传入一个接口进去；
+   3. 用来处理接口方法调用的`InvocationHandler`实例。
+3. 将返回的`Object`强制转型为接口。
+
+**动态代理实际上是JVM在运行期动态创建class字节码并加载的过程**，它并没有什么黑魔法，把上面的动态代理改写为静态实现类大概长这样：
+
+```java
+public class HelloDynamicProxy implements Hello {
+    InvocationHandler handler;
+    public HelloDynamicProxy(InvocationHandler handler) {
+        this.handler = handler;
+    }
+    public void morning(String name) {
+        handler.invoke(
+           this,
+           Hello.class.getMethod("morning", String.class),
+           new Object[] { name });
+    }
+}
+```
+
+**其实就是JVM帮我们自动编写了一个上述类（不需要源码，可以直接生成字节码）**，并不存在可以直接实例化接口的黑魔法。
+
+### 小结
+
+Java标准库提供了动态代理功能，允许在运行期动态创建一个接口的实例；
+
+动态代理是通过`Proxy`创建代理对象，然后将接口方法“代理”给`InvocationHandler`完成的。
+
+
+
+# 7. AOP 示例(ChatGPT)
+
+Q: 面向切面编程是什么编程, 元编程又是什么编程
+
+```tex
+面向切面编程（AOP）是一种编程范式，它允许开发者在不修改原有代码的情况下，通过定义切面来横向地扩展应用程序的功能。切面是一组横切关注点（如日志记录、性能统计、事务管理等），可以独立于应用程序的主要业务逻辑来实现，并可以在多个应用程序中共享和重用。通过 AOP，开发者可以更加方便地管理和维护应用程序，提高代码的复用性和可维护性。
+
+元编程（Metaprogramming）是一种编程范式，它允许程序在运行时动态地创建、操作和修改代码。元编程可以实现许多高级编程技巧，比如在运行时创建新的类、修改类的方法、劫持对象的行为等等。元编程在一些场景下可以提高代码的灵活性和复用性，但是也会增加代码的复杂度和难度，需要开发者有一定的编程经验和技巧。
+
+需要注意的是，AOP 和元编程虽然都可以实现动态地扩展应用程序的功能，但是它们的本质不同。AOP 是一种基于面向对象编程的扩展方式，主要用于管理和维护应用程序，而元编程则是一种更加底层的编程技巧，主要用于实现高级编程技巧和功能。
+```
+
+Q:java中的动态代理是什么,有什么作用
+
+```lua
+在 Java 中，动态代理是一种利用 Java 反射机制在运行时动态地创建代理对象的方式，该代理对象可以替代原始对象，拦截对原始对象方法的调用，并在调用前后执行特定的操作。动态代理常用于实现 AOP（面向切面编程）等功能。
+
+动态代理的作用是在不改变原始对象的前提下，动态地增强其功能。通过使用动态代理，我们可以将一些通用的处理逻辑（如日志记录、性能统计、事务管理等）从业务逻辑中分离出来，并在需要的时候将其添加到业务逻辑中，从而实现对业务逻辑的横向扩展。
+
+动态代理主要有两种实现方式：基于接口的动态代理和基于类的动态代理。基于接口的动态代理要求原始对象实现一个或多个接口，而基于类的动态代理则要求原始对象有一个可访问的无参构造方法。在 Java 中，我们可以使用 java.lang.reflect.Proxy 类来创建基于接口的动态代理对象，或使用 byte-buddy、cglib 等第三方库来创建基于类的动态代理对象。
+```
+
+下面是一个简单的 AOP 示例，使用动态代理实现了在执行某个方法前后打印日志的功能。
+
+首先定义一个接口：
+
+```java
+public interface UserService {
+    void addUser(String username, String password);
+}
+```
+
+然后实现该接口的类：
+
+```java
+public class UserServiceImpl implements UserService {
+    @Override
+    public void addUser(String username, String password) {
+        // 实现添加用户的逻辑
+        System.out.println("添加用户：" + username);
+    }
+}
+```
+
+接下来定义一个切面类，用于在方法执行前后打印日志：
+
+```java
+public class LoggingAspect {
+    public void beforeAddUser() {
+        System.out.println("开始添加用户");
+    }
+
+    public void afterAddUser() {
+        System.out.println("用户添加完成");
+    }
+}
+```
+
+最后，定义一个工厂类，使用动态代理将切面类和原始类进行结合，生成一个新的代理对象
+
+```java
+public class UserServiceProxyFactory {
+    public static UserService createUserServiceProxy() {
+        // 创建原始对象
+        UserService userService = new UserServiceImpl();
+        // 创建切面对象
+        LoggingAspect loggingAspect = new LoggingAspect();
+        // 使用动态代理将原始对象和切面对象结合起来
+        return (UserService) Proxy.newProxyInstance(
+                userService.getClass().getClassLoader(),
+                userService.getClass().getInterfaces(),
+                (proxy, method, args) -> {
+                    // 在方法执行前调用切面方法
+                    loggingAspect.beforeAddUser();
+                    // 调用原始方法
+                    Object result = method.invoke(userService, args);
+                    // 在方法执行后调用切面方法
+                    loggingAspect.afterAddUser();
+                    // 返回原始方法的返回值
+                    return result;
+                });
+    }
+}	
+```
+
+最终，我们可以通过调用工厂类的 createUserServiceProxy() 方法来获取一个新的代理对象，该代理对象可以替代原始的 UserService 对象，并在调用 addUser() 方法时自动执行 LoggingAspect 类中定义的 beforeAddUser() 和 afterAddUser() 方法，实现日志记录的功能：
+
+```java
+public class Main {
+    public static void main(String[] args) {
+        UserService userService = UserServiceProxyFactory.createUserServiceProxy();
+        userService.addUser("John", "password");
+    }
+}
+```
+
+```bash
+开始添加用户
+添加用户：John
+用户添加完成
+```
+
