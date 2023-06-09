@@ -533,7 +533,7 @@ Java的泛型是采用擦拭法实现的；
 
 子类可以获取父类的泛型类型`<T>`。
 
-## 5. extends Wildcards(通配符)(类似于 ts的extends 和infer结合体)
+## 5. extends Wildcards 向下兼容类型(通配符)(类似于 ts的extends 和infer结合体)
 
 ### 问题场景
 
@@ -688,6 +688,10 @@ class Pair<T> {
     }
 };
 ```
+
+### java中的协变（covariant）
+
++ 概念: 示一个泛型类型的子类型的关系。如果类型参数满足协变关系，那么可以将子类型的对象赋值给父类型的引用，或者将子类型的对象传递给期望父类型的参数。在Java中，数组是协变的，通配符类型（`? extends T`）也是协变的。
 
 这样一来，给方法传入`Pair<Integer>`类型时，它符合参数`Pair<? extends Number>`类型。这种使用`<? extends Number>`的泛型定义称之为上界通配符（Upper Bounds Wildcards），即把泛型类型`T`的上界限定在`Number`了。
 
@@ -865,3 +869,172 @@ Student<String> s5 = null;// compile error
 使用类似`<T extends Number>`定义泛型类时表示：
 
 - 泛型类型限定为`Number`以及`Number`的子类。
+
+
+
+## 6. super 通配符 向上兼容类型
+
+我们前面已经讲到了泛型的继承关系：`Pair<Integer>`不是`Pair<Number>`的子类。
+
+考察下面的`set`方法：
+
+```java
+void set(Pair<Integer> p, Integer first, Integer last) {
+    p.setFirst(first);
+    p.setLast(last);
+}
+```
+
+传入`Pair<Integer>`是允许的，但是传入`Pair<Number>`是不允许的。
+
+<mark>**和`extends`通配符相反**</mark>，这次，我们希望接受`Pair<Integer>`类型，以及`Pair<Number>`、`Pair<Object>`，因为`Number`和`Object`是`Integer`的父类，`setFirst(Number)`和`setFirst(Object)`实际上允许接受`Integer`类型。
+
+我们使用`super`通配符来改写这个方法：
+
+```java
+void set(Pair<? super Integer> p, Integer first, Integer last) {
+    p.setFirst(first);
+    p.setLast(last);
+}
+```
+
+注意到`Pair<? super Integer>`表示，<mark>**方法参数接受所有泛型类型为`Integer`或`Integer`父类的`Pair`类型**</mark>。
+
+下面的代码可以被正常编译：
+
+```java
+import static java.lang.System.*;
+
+
+public class Main {
+    public static void main(String[] args) {
+        Pair<Number> p1 = new Pair<>(12.3, 456);
+        Pair<Integer> p2 = new Pair<>(123, 456);
+        setName(p1, 100);
+        setName(p2, 200);
+        out.println(p1.getFirst() + "," + p1.getLast());// 100,100
+        out.println(p2.getFirst() + "," + p2.getLast());// 200,200
+    }
+
+    static void setName(Pair<? super Integer> p, Integer n) {
+        p.setFirst(n);
+        p.setLast(n);
+    }
+}
+
+
+class Pair<T> {
+    private T first;
+    private T last;
+    // windows上
+
+    public Pair(T first, T last) {
+        this.first = first;
+        this.last = last;
+    }
+
+    public T getFirst() {
+        return first;
+    }
+
+    public void setFirst(T first) {
+        this.first = first;
+    }
+
+    public T getLast() {
+        return last;
+    }
+
+    public void setLast(T last) {
+        this.last = last;
+    }
+
+
+}
+```
+
+### java中的逆变（contravariant）
+
++ 概念: 表示一个泛型类型的超类型的关系。如果类型参数满足逆变关系，那么可以将超类型的对象赋值给子类型的引用，或者将超类型的对象传递给期望子类型的参数。在Java中，通配符类型（`? super T`）是逆变的。
+
+考察`Pair<? super Integer>`的`setFirst()`方法，它的方法签名实际上是：
+
+```java
+void setFirst(? super Integer);
+```
+
+因此，可以安全地传入`Integer`类型。
+
+再考察`Pair<? super Integer>`的`getFirst()`方法，它的方法签名实际上是：
+
+```java
+? super Integer getFirst();
+```
+
+这里注意到我们无法使用`Integer`类型来接收`getFirst()`的返回值，即下面的语句将无法通过编译：
+
+```java
+Integer x = p.getFirst();
+```
+
+**因为如果传入的实际类型是`Pair<Number>`，编译器无法将`Number`类型转型为`Integer`**。
+
+注意：虽然`Number`是一个抽象类，我们无法直接实例化它。但是，即便`Number`不是抽象类，这里仍然无法通过编译。此外，传入`Pair<Object>`类型时，编译器也无法将`Object`类型转型为`Integer`。
+
+唯一可以接收`getFirst()`方法返回值的是`Object`类型：
+
+```java
+Object obj = p.getFirst();
+```
+
+因此，使用`<? super Integer>`通配符表示：
+
+- 允许调用`set(? super Integer)`方法传入`Integer`的引用；
+- 不允许调用`get()`方法获得`Integer`的引用。
+
+唯一例外是可以获取`Object`的引用：`Object o = p.getFirst()`。
+
+**换句话说，使用`<? super Integer>`通配符作为方法参数，表示方法内部代码对于参数只能写，不能读。**
+
+### 对比extends和super通配符
+
+我们再回顾一下`extends`通配符。作为方法参数，`<? extends T>`类型和`<? super T>`类型的区别在于：
+
+- `<? extends T>`允许调用读方法`T get()`获取`T`的引用，但不允许调用写方法`set(T)`传入`T`的引用（传入`null`除外）；
+- `<? super T>`允许调用写方法`set(T)`传入`T`的引用，但不允许调用读方法`T get()`获取`T`的引用（获取`Object`除外）。
+
+一个是允许读不允许写，另一个是允许写不允许读。
+
+先记住上面的结论，我们来看Java标准库的`Collections`类定义的`copy()`方法：
+
+```java
+public class Collections {
+    // 把src的每个元素复制到dest中:
+    public static <T> void copy(List<? super T> dest, List<? extends T> src) {
+        for (int i=0; i<src.size(); i++) {
+            T t = src.get(i);
+            dest.add(t);
+        }
+    }
+}
+```
+
+
+
+
+
+## 7. `java` 和 `typescript` 类型系统中的协变 和逆变
+
+在`Java`和`TypeScript`中，"协变"（`covariance`）和"逆变"（`contravariance`）是与类型参数的子类型关系有关的概念。它们描述了泛型类型在赋值、方法参数和返回值等方面的行为。
+
+在`Java`中：
+
+- 协变（`covariant`）：表示一个泛型类型的子类型的关系。如果类型参数满足协变关系，那么可以将子类型的对象赋值给父类型的引用，或者将子类型的对象传递给期望父类型的参数。在`Java`中，数组是协变的，通配符类型（`? extends T`）也是协变的。
+- 逆变（`contravariant`）：表示一个泛型类型的超类型的关系。如果类型参数满足逆变关系，那么可以将超类型的对象赋值给子类型的引用，或者将超类型的对象传递给期望子类型的参数。在`Java`中，通配符类型（`? super T`）是逆变的。
+
+在`TypeScript`中：
+
+- 协变（`covariant`）：表示一个泛型类型的子类型的关系。如果类型参数满足协变关系，那么可以将子类型的对象赋值给父类型的引用，或者将子类型的对象传递给期望父类型的参数。在`TypeScript`中，泛型类型参数默认是协变的。
+- 逆变（`contravariant`）：表示一个泛型类型的超类型的关系。如果类型参数满足逆变关系，那么可以将超类型的对象赋值给子类型的引用，或者将超类型的对象传递给期望子类型的参数。在`TypeScript`中，逆变类型的处理相对较为复杂，需要使用特殊的语法进行声明。
+
+需要注意的是，在`Java`和`TypeScript`中，泛型类型的协变和逆变关系是由编译器进行静态类型检查的。确保在使用协变和逆变时不会引发类型错误。
